@@ -593,7 +593,7 @@ geotab.addin.vehicleChecklistDashboard = function() {
       loadGdConfig(null);
       loadIssueRecords();
     },
-    focus: function(api, state) { _api = api; loadData(); loadGdConfig(null); },
+    focus: function(api, state) { _api = api; setLoading(true); loadData(); loadGdConfig(null); },
     blur: function() {}
   };
 };
