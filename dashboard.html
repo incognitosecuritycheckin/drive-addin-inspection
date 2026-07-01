@@ -4024,15 +4024,12 @@ function getRangeLabel() {
 renderCalendar();
 applyFilters(); // renders empty table until MyGeotab calls initialize()
 
-// Auto-reload if initialize() hasn't fired within 3s (MyGeotab cold-load behaviour)
-if (!sessionStorage.getItem('dash_reloaded')) {
-  sessionStorage.setItem('dash_reloaded', '1');
-  setTimeout(function() { if (!_api) window.location.reload(); }, 3000);
-} else {
-  sessionStorage.removeItem('dash_reloaded');
-  // Second load — if still no API after 3s, do one final retry
-  setTimeout(function() { if (!_api) window.location.reload(); }, 3000);
-}
+// Poll for _api — fires loadData as soon as MyGeotab injects the API object,
+// regardless of whether initialize() or focus() fires first or at all.
+(function waitForApi() {
+  if (_api) { setLoading(true); loadData(); loadGdConfig(null); return; }
+  setTimeout(waitForApi, 200);
+})();
 </script>
 </body>
 </html>
