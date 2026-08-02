@@ -593,7 +593,7 @@ geotab.addin.vehicleChecklistDashboard = function() {
       loadGdConfig(null);
       loadIssueRecords();
     },
-    focus: function(api, state) { _api = api; setLoading(true); loadData(); loadGdConfig(null); },
+    focus: function(api, state) { _api = api; loadData(); loadGdConfig(null); },
     blur: function() {}
   };
 };
@@ -1666,6 +1666,7 @@ function executeDeleteSubmission(responseId) {
   var r = RESPONSES.find(function(x) { return x.id === responseId; });
   if (!r || !r._addInDataId) { console.warn('No AddInData ID for', responseId); return; }
 
+  // Collect all Drive file IDs (walkaround + item photos)
   var allFileIds = (r.gdFileIds || []).concat(
     (r.items || []).reduce(function(acc, item) { return acc.concat(item.gdItemPhotoIds || []); }, [])
   );
@@ -1682,6 +1683,7 @@ function executeDeleteSubmission(responseId) {
     });
   }
 
+  // Delete Drive files first (best-effort), then remove the record regardless
   if (allFileIds.length > 0 && _gdConfig && _gdConfig.refreshToken) {
     gdRefreshToken(function(token) {
       var pending = allFileIds.length;
@@ -4024,12 +4026,13 @@ function getRangeLabel() {
 renderCalendar();
 applyFilters(); // renders empty table until MyGeotab calls initialize()
 
-// Poll for _api — fires loadData as soon as MyGeotab injects the API object,
-// regardless of whether initialize() or focus() fires first or at all.
-(function waitForApi() {
-  if (_api) { setLoading(true); loadData(); loadGdConfig(null); return; }
-  setTimeout(waitForApi, 200);
-})();
+// Auto-reload once if initialize() hasn't fired (MyGeotab cold-load behaviour)
+if (!sessionStorage.getItem('dash_reloaded')) {
+  sessionStorage.setItem('dash_reloaded', '1');
+  setTimeout(function() { if (!_api) window.location.reload(); }, 1500);
+} else {
+  sessionStorage.removeItem('dash_reloaded');
+}
 </script>
 </body>
 </html>
